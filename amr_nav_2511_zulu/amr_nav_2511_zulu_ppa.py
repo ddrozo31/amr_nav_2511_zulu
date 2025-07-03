@@ -90,18 +90,17 @@ class PurePursuitNode(Node):
         
 
     def find_lookahead_point(self, x, y):
-        closest_dist = float('inf')
-        lookahead_point = None
+        if not self.path:
+            return None
 
         for px, py in self.path:
             distance = math.hypot(px - x, py - y)
             if distance >= self.lookahead_distance:
                 return (px, py)
-            elif distance < closest_dist:
-                closest_dist = distance
-                lookahead_point = (px, py)
 
-        return lookahead_point
+        # Fallback: use last point (goal)
+        return self.path[-1]
+
     
     def is_goal_reached(self, x, y, tolerance=0.1):
         if not self.path:
@@ -166,14 +165,25 @@ class PurePursuitNode(Node):
             curvature = 2 * local_y / (self.lookahead_distance ** 2)
             
         if local_x <= 0.01:
-            self.get_logger().warn("Lookahead behind robot. Stopping.")
-            self.cmd_pub.publish(Twist())
+            self.get_logger().info("Lookahead behind robot. Crawling forward.")
+            twist = Twist()
+            twist.linear.x = 0.05  # creep forward
+            twist.angular.z = 0.0
+            self.cmd_pub.publish(twist)
             return
+        
+
 
         # Compute control commands
         twist = Twist()
         twist.linear.x = self.linear_speed
         twist.angular.z = self.linear_speed * curvature
+
+        
+        dist_to_goal = math.hypot(self.path[-1][0] - x, self.path[-1][1] - y)
+        if dist_to_goal < 0.3:
+            twist.linear.x = min(self.linear_speed, 0.1)
+        
         self.cmd_pub.publish(twist)
         
         self.publish_lookahead_marker(lx, ly)
