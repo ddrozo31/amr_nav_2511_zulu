@@ -1,0 +1,40 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/davidrozoosorio/ros2_ws_2501/install/ros2_control_demo_example_9/include/**",
+        "/home/davidrozoosorio/ros2_ws_2501/install/ros2_control_demo_example_2/include/**",
+        "/home/davidrozoosorio/ros2_ws_2501/install/nav2_straightline_planner/include/**",
+        "/home/davidrozoosorio/ros2_ws_2501/install/nav2_pure_pursuit_controller/include/**",
+        "/home/davidrozoosorio/turtlebot3_ws/install/turtlebot3_fake_node/include/**",
+        "/home/davidrozoosorio/turtlebot3_ws/install/turtlebot3_msgs/include/**",
+        "/home/davidrozoosorio/turtlebot3_ws/install/turtlebot3_gazebo/include/**",
+        "/home/davidrozoosorio/turtlebot3_ws/install/dynamixel_sdk_custom_interfaces/include/**",
+        "/home/davidrozoosorio/turtlebot3_ws/install/dynamixel_sdk/include/**",
+        "/home/davidrozoosorio/turtlebot3_ws/install/behaviortree_ros2/include/**",
+        "/home/davidrozoosorio/turtlebot3_ws/install/bt_interfaces/include/**",
+        "/home/davidrozoosorio/ros2_ws_2402/install/ros2_control_demo_example_2/include/**",
+        "/home/davidrozoosorio/ros2_ws_2402/install/ros2_control_demo_example_11/include/**",
+        "/home/davidrozoosorio/ros2_ws_ctrl/install/ms2r_ros2_control/include/**",
+        "/home/davidrozoosorio/ros2_ws_ctrl/install/diffdrive_ex1/include/**",
+        "/home/davidrozoosorio/ros2_ws_ctrl/install/carlikebot/include/**",
+        "/home/davidrozoosorio/ros2_ws_2401/install/ros2_control_demo_example_11/include/**",
+        "/home/davidrozoosorio/ros2_ws_2401/install/nav2_line_following_controller/include/**",
+        "/home/davidrozoosorio/ros2_ws_2401/install/f112th_sim_2401_delta/include/**",
+        "/home/davidrozoosorio/ros2_ws_soft/install/interfaces/include/**",
+        "/opt/ros/humble/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
