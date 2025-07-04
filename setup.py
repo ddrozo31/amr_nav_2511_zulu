@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'amr_nav_2511_zulu_astar = amr_nav_2511_zulu.amr_nav_2511_zulu_astar:main',
             'amr_nav_2511_zulu_ppa= amr_nav_2511_zulu.amr_nav_2511_zulu_ppa:main',
+            'amr_nav_2511_zulu_astar_bspline = amr_nav_2511_zulu.amr_nav_2511_zulu_astar_bspline:main',
         ],
     },
 )

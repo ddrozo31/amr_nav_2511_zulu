@@ -37,7 +37,7 @@ class PurePursuitNode(Node):
         super().__init__('pure_pursuit_node')
         
         self.path = []
-        self.lookahead_distance = 0.5  # meters
+        self.lookahead_distance = 1.5  # meters
         self.linear_speed = 0.25  # m/s
         self.robot_pose = None
         
@@ -66,12 +66,11 @@ class PurePursuitNode(Node):
    
     def get_robot_pose(self):
         try:
-            now = rclpy.time.Time()
             trans = self.tf_buffer.lookup_transform(
                 'map',
                 'base_link',
-                now,
-                timeout=rclpy.duration.Duration(seconds=0.5)
+                rclpy.time.Time(),  
+                timeout=rclpy.duration.Duration(seconds=0.25)
             )
             x = trans.transform.translation.x
             y = trans.transform.translation.y
@@ -81,7 +80,7 @@ class PurePursuitNode(Node):
         except (LookupException, ConnectivityException, ExtrapolationException):
             self.get_logger().warn("TF lookup failed.")
             return None
-   
+    
    
         
     def path_callback(self, msg):
@@ -94,12 +93,16 @@ class PurePursuitNode(Node):
             return None
 
         for px, py in self.path:
-            distance = math.hypot(px - x, py - y)
-            if distance >= self.lookahead_distance:
+            dist = math.hypot(px - x, py - y)
+            if dist >= self.lookahead_distance:
                 return (px, py)
 
-        # Fallback: use last point (goal)
-        return self.path[-1]
+        # ✅ FIX: fallback only if robot is near goal
+        gx, gy = self.path[-1]
+        if math.hypot(gx - x, gy - y) < 0.3:
+            return gx, gy
+
+        return None
 
     
     def is_goal_reached(self, x, y, tolerance=0.1):
@@ -137,15 +140,15 @@ class PurePursuitNode(Node):
 
         x, y, yaw = pose
 
-        if self.is_goal_reached(x, y):
-            self.get_logger().info_once("Goal reached.")
-            self.cmd_pub.publish(Twist())  # Stop the robot
+        if self.is_goal_reached(x, y, tolerance=0.15):
+            self.get_logger().info("Goal reached. Stopping.")
+            self.cmd_pub.publish(Twist())
             self.path = []
             return
 
         lookahead = self.find_lookahead_point(x, y)
         if lookahead is None:
-            self.get_logger().info_once("No valid lookahead point.")
+            self.get_logger().info("No valid lookahead point.")
             self.cmd_pub.publish(Twist())  # Stop
             return
 
@@ -159,38 +162,33 @@ class PurePursuitNode(Node):
         local_x = math.cos(yaw) * dx + math.sin(yaw) * dy
         local_y = -math.sin(yaw) * dx + math.cos(yaw) * dy
 
-        if local_x <= 0:
-            curvature = 0.0
-        else:
-            curvature = 2 * local_y / (self.lookahead_distance ** 2)
-            
         if local_x <= 0.01:
-            self.get_logger().info("Lookahead behind robot. Crawling forward.")
+            self.get_logger().warn("Lookahead behind. Creeping.")
             twist = Twist()
-            twist.linear.x = 0.05  # creep forward
+            twist.linear.x = 0.05
             twist.angular.z = 0.0
             self.cmd_pub.publish(twist)
             return
-        
+
+        curvature = 2 * local_y / (self.lookahead_distance ** 2)
+        angular_z = self.linear_speed * curvature
+        angular_z = max(-1.5, min(1.5, angular_z))  
+
+        dist_to_goal = math.hypot(self.path[-1][0] - x, self.path[-1][1] - y)
+        linear_x = min(self.linear_speed, 0.1) if dist_to_goal < 0.4 else self.linear_speed
+
 
 
         # Compute control commands
         twist = Twist()
         twist.linear.x = self.linear_speed
-        twist.angular.z = self.linear_speed * curvature
-
-        
-        dist_to_goal = math.hypot(self.path[-1][0] - x, self.path[-1][1] - y)
-        if dist_to_goal < 0.3:
-            twist.linear.x = min(self.linear_speed, 0.1)
-        
+        twist.angular.z = self.linear_speed * curvature       
         self.cmd_pub.publish(twist)
         
         self.publish_lookahead_marker(lx, ly)
         
-        self.get_logger().info(f"Lookahead world: ({lx:.2f}, {ly:.2f})")
-        self.get_logger().info(f"Robot pose: ({x:.2f}, {y:.2f}, {math.degrees(yaw):.1f} deg)")
-        self.get_logger().info(f"Lookahead in robot frame: x={local_x:.2f}, y={local_y:.2f}")
+        self.get_logger().info(f"Robot: ({x:.2f}, {y:.2f}) | Lookahead: ({lx:.2f}, {ly:.2f})")
+        self.get_logger().info(f"Local frame: x={local_x:.2f}, y={local_y:.2f}")
 
 
 def main(args=None):
